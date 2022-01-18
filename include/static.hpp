@@ -9,8 +9,6 @@
 
 #include <array>
 #include <algorithm>
-#include <functional>
-#include <type_traits>
 
 namespace stc {
   
@@ -112,9 +110,9 @@ namespace stc {
   struct checker: identity<int>{};
 
 // =============================================================================
-// pipe helpers
+// static helpers
 // ============================================================================= 
-  namespace pipe {
+  namespace details {
     template<typename T>
     struct process {
       template<typename F>
@@ -132,6 +130,11 @@ namespace stc {
       decltype(std::declval<T>().cbegin()),
       decltype(std::declval<T>().cend())
     >::type;
+    
+    template<typename T>
+    constexpr auto declval()->T{ return {}; }
+    template <>
+    constexpr auto declval()->void{}
   }
 
 // =============================================================================
@@ -139,48 +142,55 @@ namespace stc {
 // ============================================================================= 
   template<typename T>
   constexpr auto load(T&& in) {
-    return stc::pipe::step::make([
+    return stc::details::step::make([
       &in
     ](auto&& nxt) mutable {
       for(auto& v : in)
         nxt(v);
+      return stc::details::declval<
+        decltype(nxt(in.front()))>();
     });
   }
   
   template<typename F>
-  constexpr auto transform(F f) {
-    return stc::pipe::step::make([
-      f=std::move(f)
-    ](auto&& n) mutable {
+  constexpr auto transform(F fnc) {
+    return stc::details::step::make([
+      fnc=std::move(fnc)
+    ](auto&& nxt) mutable {
       return [
-        f=std::move(f),
-        n=std::move(n)
-      ](auto&& v) mutable { 
-        n(f(v)); 
+        fnc=std::move(fnc),
+        nxt=std::move(nxt)
+      ](auto&& val) mutable { 
+        nxt(fnc(val)); 
+        return stc::details::declval<
+          decltype(nxt(fnc(val)))>();
       }; 
     });
   }
   
   template<typename F>
-  constexpr auto filter(F f){
-    return stc::pipe::step::make([
-      f=std::move(f)
-    ](auto&& n) mutable {
+  constexpr auto filter(F fnc){
+    return stc::details::step::make([
+      fnc=std::move(fnc)
+    ](auto&& nxt) mutable {
       return [
-        f=std::move(f),
-        n=std::move(n)
-      ](auto&& v) mutable { 
-        if(f(v)) n(v); 
+        fnc=std::move(fnc),
+        nxt=std::move(nxt)
+      ](auto&& val) mutable { 
+        if(fnc(val)) nxt(val); 
+        return stc::details::declval<
+          decltype(nxt(val))>();
       };
     });
   }
   
-  template<typename T, std::size_t N, typename F>
+  template<std::size_t N, typename F>
   constexpr auto sort(F&& fnc){
-    return stc::pipe::close::make([
+    return stc::details::close::make([
       fnc = std::move(fnc)
     ](auto&& beg) mutable {
-      auto res = stc::vector<T,N+1>{};
+      auto aux = [](auto a){ return a; };
+      auto res = stc::vector<decltype(beg(aux)),N+1>{};
       auto end = [&res, &fnc](auto&& v) {
         res.push_back(v);
         std::rotate(
@@ -199,17 +209,17 @@ namespace stc {
 // =============================================================================
 // pipeline links
 // ============================================================================= 
-template<typename A, typename B, stc::pipe::check<A> = 0>
+template<typename A, typename B, stc::details::check<A> = 0>
 constexpr auto operator|(
   A&& a,
-  stc::pipe::step::type<B>&& b) {
+  stc::details::step::type<B>&& b) {
   return stc::load(std::forward<A>(a)) | std::move(b);
 }
 template<typename A,typename B>
 constexpr auto operator|(
-  stc::pipe::step::type<A>&& a,
-  stc::pipe::step::type<B>&& b) {
-  return stc::pipe::step::make([
+  stc::details::step::type<A>&& a,
+  stc::details::step::type<B>&& b) {
+  return stc::details::step::make([
     a = std::move(a),
     b = std::move(b)
   ](auto&& c) mutable { 
@@ -218,7 +228,7 @@ constexpr auto operator|(
 }
 template<typename A,typename B>
 constexpr auto operator|(
-  stc::pipe::step::type<A>&& a,
-  stc::pipe::close::type<B>&& b) {
+  stc::details::step::type<A>&& a,
+  stc::details::close::type<B>&& b) {
   return b(a);
 }
