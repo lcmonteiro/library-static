@@ -11,87 +11,9 @@
 #include <tuple>
 #include <algorithm>
 
+#include "static/vector.hpp"
+
 namespace stc {
-
-// =============================================================================
-// static vector
-// =============================================================================
-  template<typename T, std::size_t N>
-  class vector {
-    using base_type = std::array<T,N>;
-  public:
-    using difference_type        = typename base_type::difference_type;
-    using size_type              = typename base_type::size_type;
-    using value_type             = typename base_type::value_type;
-    using const_reference        = typename base_type::const_reference;
-    using reference              = typename base_type::reference;
-    using const_pointer          = typename base_type::const_pointer;
-    using pointer                = typename base_type::pointer;
-    using const_iterator         = typename base_type::const_iterator;
-    using iterator               = typename base_type::iterator;
-    using const_reverse_iterator = typename base_type::const_reverse_iterator;
-    using reserse_iterator       = typename base_type::reverse_iterator;
-
-    template<typename ...A>
-    vector(A&&...as):
-      end_{sizeof...(A)},
-      arr_{{std::forward<A>(as)...}}{
-      std::for_each(
-        end(),
-        arr_.end(),
-        [](auto& e){ e.~T(); });
-    }
-
-    auto& operator[](size_type i) const {
-      return arr_[i];
-    }
-
-    auto& front()   const { return arr_[0]; }
-    auto& back()    const { return arr_[end_-1];}
-
-    auto data()     const { return arr_.data(); }
-    auto size()     const { return end_; }
-
-    auto max_size() const { return arr_.max_size(); }
-    auto empty()    const { return 0==end_; }
-    auto full()     const { return N==end_; }
-
-    auto  cbegin() const { return arr_.cbegin(); }
-    auto   begin() const { return arr_.begin(); }
-    auto   begin()       { return arr_.begin(); }
-    auto    cend() const { return std::next(arr_.cbegin() , end_); }
-    auto     end() const { return std::next(arr_.begin()  , end_); }
-    auto     end()       { return std::next(arr_.begin()  , end_); }
-
-    auto crbegin() const { return std::next(arr_.crbegin(), N-end_); }
-    auto  rbegin() const { return std::next(arr_.rbegin() , N-end_); }
-    auto  rbegin()       { return std::next(arr_.rbegin() , N-end_); }
-    auto   crend() const { return arr_.crend(); }
-    auto    rend() const { return arr_.rend(); }
-    auto    rend()       { return arr_.rend(); }
-
-    template <typename... A>
-    auto& push_back(A&&... as) {
-      if(N==end_) pop_back();
-      return *new(&arr_[end_++])T(std::forward<A>(as)...);
-    }
-    auto pop_back() {
-      if(0==end_) return false;
-      arr_[--end_].~T();
-      return true;
-    }
-  private:
-    size_type end_;
-    base_type arr_;
-  };
-  template<typename T, typename...Ts>
-  auto make_vector(T v, Ts...vs) {
-    return vector<T, 1 + sizeof...(Ts)>{
-      std::forward<T>(v),
-      std::forward<Ts>(vs)...
-    };
-  }
-
 // =============================================================================
 // static function
 // =============================================================================

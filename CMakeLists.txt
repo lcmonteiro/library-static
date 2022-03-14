@@ -6,8 +6,12 @@ project(library-static)
 # properties
 set(CMAKE_CXX_STANDARD 14)
 
+# options
+add_compile_options(-Wall -Wextra -pedantic -Werror)
+
 # target
 add_library(library-static INTERFACE)
+
 # target configuration
 target_include_directories(library-static INTERFACE ./include)
 

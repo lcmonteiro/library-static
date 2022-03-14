@@ -13,7 +13,7 @@
 template<typename T>
 auto print(const T& val){
   std::cout << "[ " << val << " ]" << std::endl;
-};
+}
 
 template<typename...Ts>
 auto print(const std::tuple<Ts...>& val){
@@ -22,7 +22,7 @@ auto print(const std::tuple<Ts...>& val){
       << std::get<1>(val)
       << "} "
       << std::endl;
-}; 
+}
 
 template<typename T, std::size_t N>
 auto print(const stc::vector<T,N>& vec){
@@ -31,7 +31,7 @@ auto print(const stc::vector<T,N>& vec){
     std::cout << v << " ";
   }
   std::cout << "]" << std::endl;
-};  
+}
 
 template<typename...Ts, std::size_t N>
 auto print(const stc::vector<std::tuple<Ts...>,N>& vec){
@@ -44,7 +44,7 @@ auto print(const stc::vector<std::tuple<Ts...>,N>& vec){
       << "} ";
   }
   std::cout << "]" << std::endl;
-};  
+}  
 
 // ========================================================================
 // pipelines
