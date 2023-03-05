@@ -46,15 +46,15 @@ auto print(const stc::vector<std::tuple<Ts...>,N>& vec){
   std::cout << "]" << std::endl;
 }  
 
-// ========================================================================
+// =============================================================================
 // pipelines
-// ======================================================================== 
+// ============================================================================= 
 auto process = [](auto&& step){
   return std::move(step)
-    | stc::filter([](auto& d){ return d%2==0; })
-    | stc::transform([](auto& d){ return 0.1+d*d; })
-    | stc::transform_scan([](auto& a, auto& b){ return a+b; })
-    | stc::transform_adjacent([](auto& a, auto& b){ return a-b; });
+    | stc::filter([](auto& d){ return d%2 == 0; })
+    | stc::transform([](auto& d){ return 0.1 + (d * d); })
+    | stc::transform_scan([](auto& a, auto& b){ return a + b; })
+    | stc::transform_adjacent([](auto& a, auto& b){ return a - b; });
 };
 
 // ============================================================================
@@ -62,20 +62,19 @@ auto process = [](auto&& step){
 // ============================================================================ 
 int main() {
   auto scc = true;
-
   auto vec = stc::vector<int, 10>{1,8,3,4,5,6};
   auto out = vec
-    | stc::filter([](auto& d){ return d%2==0; })
-    | stc::transform([](auto& d){ return 0.1+d*d; })
-    | stc::transform_scan([](auto& a, auto& b){ return a+b; })
-    | stc::transform_adjacent([](auto& a, auto& b){ return a-b; })
+    | stc::filter([](auto& d){ return d%2 == 0; })
+    | stc::transform([](auto& d){ return 0.1 + (d * d); })
+    | stc::transform_scan([](auto& a, auto& b){ return a + b; })
+    | stc::transform_adjacent([](auto& a, auto& b){ return a - b; })
     | stc::zip(vec
       | stc::attach(process)
       | stc::head<3>())
     | stc::reduce([](auto& a, auto& b){ 
       return std::make_tuple(
         std::get<0>(a)+std::get<0>(b), 
-        std::get<1>(a)+std::get<1>(b));});
+        std::get<1>(a)+std::get<1>(b)); });
   scc &= std::get<0>(out) == std::get<1>(out);
   print(out); 
 
